@@ -48,9 +48,6 @@ Tecnologías utilizadas:
 •	DBeaver 25.2.1
 •	GitHub (para control de versiones y entrega del proyecto)
 
-
-
-
 Proyecto realizado por José Ignacio Ros
 nachoros87@gmail.com
 Máster en Data Science — The Power
