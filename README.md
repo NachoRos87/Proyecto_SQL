@@ -67,8 +67,8 @@ Proyecto_SQL/
 
 ---
 
-**Proyecto realizado por:
-													** José Ignacio Ros Pérez ** 
+## Proyecto realizado por:
+													**José Ignacio Ros Pérez** 
  													*nachoros87@gmail.com*  
 												  *Máster en Data Science — The Power*
 
