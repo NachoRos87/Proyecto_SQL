@@ -39,7 +39,7 @@ Proyecto_SQL/
 
 		/README.md
 		/BBDD_Proyecto.sql
-		/queries.sql
+		/Queries.sql
 		/ER_diagram.png
 
 
