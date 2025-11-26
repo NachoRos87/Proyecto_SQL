@@ -21,12 +21,14 @@ ORDER BY length ASC;
 -- 6. Encuentra el nombre y apellido de los actores que tengan 'Allen' en su apellido:
 SELECT first_name, last_name
 FROM actor
-WHERE last_name ILIKE '%allen%';
+WHERE last_name LIKE '%Allen%'; -- MEJORA: He modificado de acuerdo a lo indicado. No obstante, he contemplado %Allen% por si, por ejemplo, entre los actores hubiera
+								-- alguno que se apellidase 'McAllen', dado que la consulta era que contuviera 'Allen' no que empezaran así.
 
 -- 7. Encuentra la cantidad total de películas en cada clasificación de la tabla “filmˮ y muestra la clasificación junto con el recuento:
 SELECT rating, COUNT(*) AS numero_peliculas
 FROM film
-GROUP BY rating;
+GROUP BY rating
+ORDER BY numero_peliculas DESC;-- MEJORA: Se añade ORDER BY para que el resultado tenga mayor valor analítico.
 
 --8. Encuentra el título de todas las películas que son ‘PG13ʼ o tienen una duración mayor a 3 horas en la tabla film:
 SELECT title, rating, length
@@ -45,10 +47,15 @@ FROM
     film;
 
 -- 11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día:
-SELECT amount, payment_date
-FROM payment
-ORDER BY payment_date DESC -- Ordenamos los resultados de manera descendente, esto es, los primeros son los últimos pagos
-LIMIT 1 OFFSET 2; -- Limitamos a 1 resultado, saltando los 2 primeros, devolviendo así el 3er o antepe
+-- CORRECCIÓN CONCEPTUAL: El enunciado pide el "antepenúltimo alquiler", no el tercer pago.
+SELECT rental.rental_id,
+       payment.amount,
+       rental.rental_date
+FROM rental
+INNER JOIN payment
+    ON payment.rental_id = rental.rental_id
+ORDER BY rental.rental_date DESC
+LIMIT 1 OFFSET 2;-- Limitamos a 1 resultado, saltando los 2 primeros, devolviendo así el 3er o antepenúltimo
 
 -- 12. Encuentra el título de las películas en la tabla “filmˮ que no sean ni ‘NC-17ʼ ni ‘Gʼ en cuanto a su clasificación:
 SELECT title, rating
@@ -117,7 +124,7 @@ HAVING AVG(film.length) > 110
 ORDER BY duracion_promedio DESC;
 
 -- 21. Media de duración del alquiler de las películas:
-SELECT (AVG(return_date - rental_date)) AS promedio_rental_duration
+SELECT AVG(EXTRACT(DAY FROM return_date - rental_date)) AS promedio_rental_duration -- MEJORA: Se usa EXTRACT(DAY FROM...) para mostrar la duración en días decimales
 FROM rental
 WHERE return_date IS NOT NULL; -- Si hay algún alquiler que no ha sido devuelto, lo obvia
 
@@ -161,7 +168,7 @@ WHERE rental_rate > (-- Creamos una subconsulta para conseguir el promedio del p
     SELECT AVG(rental_rate)
     FROM film
 )
-ORDER BY rental_rate ASC;
+ORDER BY rental_rate DESC;-- MEJORA: Se utiliza ORDER BY DESC para ver primero las películas más caras
 
 -- 28. Muestra el id de los actores que hayan participado en más de 40 películas:
 SELECT T1.actor_id, COUNT(T2.film_id) AS num_peliculas
@@ -172,22 +179,23 @@ GROUP BY T1.actor_id
 HAVING COUNT(T2.film_id) > 40;
 
 -- 29. Obtener todas las películas y, si están disponibles en el inventario, mostrar la cantidad disponible:
+-- MEJORA: Se omiten los alias T1 y T2.
 SELECT
-    T1.title,
-    COUNT(T2.inventory_id) AS cantidad_disponible
+    film.title,
+    COUNT(inventory.inventory_id) AS cantidad_disponible
 FROM
-    film AS T1
+    film 
 LEFT JOIN
-    inventory AS T2 ON T1.film_id = T2.film_id
+    inventory ON film.film_id = inventory.film_id
     /* LEFT JOIN garantiza que se mantengan todas las filas de la tabla de la izquierda (film),
      * y se les unan las filas de la tabla de la derecha (inventory) si hay una coincidencia.
      * Si no hay coincidencia (es decir, una película no está en el inventario), las columnas
      * de la tabla inventory serán NULL.
      */
 GROUP BY
-    T1.film_id, T1.title
+    film.film_id, film.title
 ORDER BY
-    T1.title;
+    film.title;
 
 -- 30. Obtener los actores y el número de películas en las que ha actuado:
 SELECT first_name, last_name, count(t2.film_id) AS num_peliculas
@@ -258,7 +266,7 @@ LIMIT 5;
 -- 35. Selecciona todos los actores cuyo primer nombre es 'Johnny:
 SELECT first_name, last_name
 FROM actor
-WHERE actor.first_name ILIKE 'Johnny';
+WHERE actor.first_name ILIKE 'Johnny'; -- CORRECCIÓN: Se cierra correctamente la comilla simple en 'Johnny'.
 
 -- 36. Renombra la columna "first_name" como Nombre y "last_name" como Apellido:
 SELECT
@@ -591,6 +599,7 @@ ORDER BY
 
 -- 60. Encuentra los nombres de los clientes que han alquilado al menos 7 películas distintas.
 -- Ordena los resultados alfabéticamente por apellido:
+-- CORRECCIÓN: Contamos film_id desde la tabla film.
 SELECT
     T1.first_name,
     T1.last_name
@@ -600,10 +609,12 @@ JOIN
     rental AS T2 ON T1.customer_id = T2.customer_id
 JOIN
     inventory AS T3 ON T2.inventory_id = T3.inventory_id
+JOIN
+    film AS T4 ON T3.film_id = T4.film_id   -- JOIN adicional para garantizar el acceso a film_id
 GROUP BY
     T1.customer_id, T1.first_name, T1.last_name
 HAVING
-    COUNT(DISTINCT T3.film_id) >= 7 -- Contamos el número de iDs de películas diferentes que sean mayor que 7
+    COUNT(DISTINCT T4.film_id) >= 7         -- Ahora contamos desde la tabla film
 ORDER BY
     T1.last_name ASC;
 
@@ -666,4 +677,5 @@ LEFT JOIN
 GROUP BY
     T1.customer_id, T1.first_name, T1.last_name
 ORDER BY
+
     cantidad_alquileres DESC;
